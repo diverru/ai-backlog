@@ -24,6 +24,13 @@ class PageLayout:
         ),
         NavSection.ARCHIVE: ICON.format('<path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/>'),
     }
+    # an amber tile with list bars, to tell the tab apart from others
+    FAVICON = (
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
+        "%3Crect width='32' height='32' rx='8' fill='%23f2a900'/%3E"
+        "%3Cg stroke='%231a1a1f' stroke-width='3.5' stroke-linecap='round'%3E"
+        "%3Cpath d='M9 10h14M9 16h10M9 22h6'/%3E%3C/g%3E%3C/svg%3E"
+    )
     SEARCH_ICON = (
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" '
         'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" '
@@ -155,8 +162,11 @@ class PageLayout:
     ROW_SCRIPT = """\
 (function () {
   function follow(event) {
-    var row = event.target.closest('tr.rowlink');
-    if (!row || event.target.closest('a, button, input, select, label')) return;
+    var row = event.target.closest('.rowlink');
+    if (!row) return;
+    // a drag that selected text is a selection, not a click
+    if (!window.getSelection().isCollapsed) return;
+    if (event.target.closest('a, button, input, select, label')) return;
     var link = row.querySelector('a.main');
     if (!link) return;
     var aside = event.button === 1 || event.ctrlKey || event.metaKey;
@@ -183,6 +193,7 @@ class PageLayout:
             '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
             f"<title>{esc(content.title)}{where} — backlog</title>\n"
+            f'<link rel="icon" href="{self.FAVICON}">\n'
             f"<script>{self.HEAD_SCRIPT}</script>\n"
             "<noscript><style>.theme{display:none}</style></noscript>\n"
             f"<style>\n{self.css}\n</style>\n</head>\n<body>\n"
