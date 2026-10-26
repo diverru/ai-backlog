@@ -152,7 +152,8 @@ the macOS `open` command, the only program the viewer starts. Requests with a
 foreign Host header, and an open request from another origin, are refused.
 Pages of a workspace:
   /NAME/               what needs attention (the groups of `list --attention`)
-  /NAME/items          active items; filters status and tag, sort
+  /NAME/items          active items; filters status and tag, sort (default:
+                       closest to closing first, by the least advanced unit)
   /NAME/items/N        the card: units, post-release checks, corrections,
                        links, the brief rendered from markdown; an archived
                        item shows its outcome
@@ -161,6 +162,8 @@ Pages of a workspace:
                        &archive=1 for the archive
 `/` opens the first workspace. The archive file is opened only by the archive
 pages, the archive search and the card of an archived item.
+Every workspace in the rail shows its attention and active item counts, read
+from its BACKLOG file only.
 
 To keep it running, save a launchd job as
 ~/Library/LaunchAgents/local.backlog.serve.plist (backlog does not install it)

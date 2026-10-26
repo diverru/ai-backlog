@@ -100,6 +100,18 @@ class DisplayStatus(StrEnum):
     STUCK = "stuck"
 
 
+class Readiness(StrEnum):
+    """How far an item is from closing, the nearest first (the order of the
+    members is the order of the Items page).
+    """
+
+    READY_TO_CLOSE = "ready_to_close"
+    POST_RELEASE = "post_release"
+    MERGED = "merged"
+    WIP = "wip"
+    TODO = "todo"
+
+
 class ListSort(StrEnum):
     """The order of `list`; number is the default."""
 

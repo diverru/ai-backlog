@@ -43,7 +43,7 @@ class ItemPage:
             StateBox.render(view, location),
             cls._render_recovery_note(view, item),
             f'<h2>Units <span class="n">{len(item.work)}</span></h2>',
-            UnitCards.render(item.work)
+            UnitCards.render(view, item)
             if item.work
             else '<p class="empty-state">No units yet</p>',
             CorrectionHistory.render(item.work),

@@ -4,7 +4,7 @@ from collections import Counter
 
 from backlog_cli.domain.situation import ItemSituation
 from backlog_cli.serve.badges import Badge
-from backlog_cli.domain.vocabulary import DisplayStatus, ListSort, UnitStatus
+from backlog_cli.domain.vocabulary import DisplayStatus, ListSort, Readiness, UnitStatus
 from backlog_cli.serve.text import HtmlText, LocalDate
 from backlog_cli.serve.table_sort import SortHeader
 from backlog_cli.serve.view import ItemFilter, NavSection, PageContent, WorkspaceView
@@ -44,12 +44,15 @@ class StatusStyle:
 
 
 class ItemsPage:
-    SORTS = ("number", "title", "status", "priority", "due")
+    SORTS = ("readiness", "number", "title", "priority", "due")
+    DEFAULT_SORT = "readiness"
 
     @classmethod
     def build(cls, view: WorkspaceView, params: dict[str, str]) -> PageContent:
         status = cls._read_enum(DisplayStatus, params.get("status"))
-        sort = params.get("sort") if params.get("sort") in cls.SORTS else "number"
+        sort = (
+            params.get("sort") if params.get("sort") in cls.SORTS else cls.DEFAULT_SORT
+        )
         direction = "desc" if params.get("dir") == "desc" else "asc"
         tag = params.get("tag") or None
         shown = [
@@ -59,11 +62,12 @@ class ItemsPage:
             and (tag is None or tag in situation.item.tags)
         ]
         shown = cls._sort(shown, sort, direction)
+        is_default = (sort, direction) == (cls.DEFAULT_SORT, "asc")
         flt = ItemFilter(
             str(status or ""),
             tag or "",
-            "" if (sort, direction) == ("number", "asc") else sort,
-            "" if (sort, direction) == ("number", "asc") else direction,
+            "" if is_default else sort,
+            "" if is_default else direction,
         )
         count = f" \u00b7 {len(shown)}" if status or tag else ""
         body = [
@@ -80,11 +84,11 @@ class ItemsPage:
     def _sort(
         situations: list[ItemSituation], sort: str, direction: str
     ) -> list[ItemSituation]:
-        statuses = list(DisplayStatus)
+        stages = list(Readiness)
         keys = {
+            "readiness": lambda s: (stages.index(s.item.readiness), s.item.number),
             "number": lambda s: (s.item.number,),
             "title": lambda s: (s.item.title.lower(), s.item.number),
-            "status": lambda s: (statuses.index(s.display_status), s.item.number),
             "priority": lambda s: s.get_sort_key(ListSort.PRIORITY),
             "due": lambda s: s.get_sort_key(ListSort.DUE),
         }
@@ -119,7 +123,7 @@ class ItemsPage:
         return (
             '<div class="panel table-wrap"><table class="table"><thead><tr>'
             f"{head('number', '№')}{head('title', 'Title')}"
-            f"{head('status', 'Status')}{head('priority', 'Priority')}"
+            f"{head('readiness', 'Status')}{head('priority', 'Priority')}"
             f"<th>Units</th>{head('due', 'Due')}<th>Tags</th></tr></thead>"
             f"<tbody>{rows}</tbody></table></div>"
         )

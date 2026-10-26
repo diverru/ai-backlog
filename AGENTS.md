@@ -68,8 +68,10 @@ renders the briefs).
   A repeated `merged` or `released` needs `--correction "why"`: the given fields
   replace the old ones, the others stay, and the old evidence goes to
   `PrUnit.corrections`. A merge in `merged` cannot be cancelled or superseded
-  (a revert unit undoes it). One PR belongs to one unit of the active items; PR
-  owner and name are stored lower case.
+  (a revert unit undoes it). One PR may belong to units of several items:
+  `merged` is written to every unmerged unit of that PR (a unit whose PR is already
+  merged copies that merge), and `released` must list every merged unit of it.
+  PR owner and name are stored lower case.
 - A failed check (`post_release fail`, with its own `--at`) stores a `Finding`
   and leaves the action pending. It is settled only when a unit that the item did
   not have at the finding (`Finding.known_units`) has been released

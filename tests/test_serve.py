@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from backlog_cli.command.search import SearchTimeLimit
+from backlog_cli.domain.vocabulary import Readiness
 from backlog_cli.serve.server import ViewerServer
 from backlog_cli.serve.site import Site
 from backlog_cli.serve.text import LocalDate
@@ -120,8 +121,8 @@ def test_no_workspace_shows_how_to_bind_and_two_are_listed(backlog: Backlog) -> 
         reply = started.request("/")
         assert (reply.status, reply.headers["Location"]) == (302, "/alpha/")
         page = started.get("/alpha/")
-        assert '<a class="ws-row" href="/alpha/">alpha</a><ul class="ws-pages">' in page
-        assert '<a class="ws-row" href="/zeta/">zeta</a></div>' in page
+        assert '<a class="ws-row" href="/alpha/">alpha<span class="ws-counts">' in page
+        assert '<a class="ws-row" href="/zeta/">zeta<span class="ws-counts">' in page
         assert "<select" not in page and 'href="/alpha/items"' in page
         assert 'class="ws-pages"' not in started.get("/zeta/").split("zeta")[0]
         assert started.request("/_/go?ws=zeta&to=items").status == 404
@@ -686,3 +687,96 @@ def test_rail_filters_and_sortable_headers_keep_each_other(
     assert "<h1>All items \u00b7 2</h1>" in both and "<h1>All items</h1>" in page
     archive = viewer.get("/ws/archive")
     assert "<h1>Archive</h1>" in archive and 'class="f-wide"' in archive
+
+
+def ws_counts(page: str, name: str) -> str | None:
+    """The counts shown in the rail row of one workspace, as `attention/active`."""
+    row = re.search(rf'<a class="ws-row" href="/{name}/">(.*?)</a>', page).group(1)
+    numbers = re.findall(r'<span class="count( quiet)?">(\d+)</span>', row)
+    if not numbers:
+        return None
+    attention = next((n for quiet, n in numbers if not quiet), "-")
+    return f"{attention}/{next(n for quiet, n in numbers if quiet)}"
+
+
+def test_every_workspace_row_shows_its_attention_and_active_counts(
+    viewer: Viewer, workspace: Backlog
+) -> None:
+    build_demo(workspace)
+    workspace.add_item("plain")
+    (workspace.work / "z").mkdir()
+    workspace.ok("bind", "zeta", "--dir", str(workspace.work / "z"))
+    (workspace.work / "o").mkdir()
+    workspace.ok("bind", "omega", "--dir", str(workspace.work / "o"))
+    for slug in ("one", "two", "three"):
+        workspace.ok("--workspace", "zeta", "add", slug, "--title", slug)
+    workspace.ok("--workspace", "zeta", "1", "cancel", "--reason", "x")
+    workspace.workspace_file("ARCHIVE.yaml", "zeta").write_text("not yaml: [")
+    for path in ("/ws/", "/zeta/items", "/ws/items/1"):
+        page = viewer.get(path)
+        assert ws_counts(page, "ws") == "2/2"  # the failed check and the empty item
+        assert ws_counts(page, "zeta") == "2/2"  # two empty items; one is archived
+        assert ws_counts(page, "omega") == "-/0"  # no attention: no badge
+    workspace.workspace_file("BACKLOG.yaml", "zeta").write_text("items: [unclosed")
+    page = viewer.get("/ws/")
+    assert ws_counts(page, "zeta") is None and ws_counts(page, "ws") is not None
+
+
+def build_one_item_per_stage(workspace: Backlog) -> None:
+    """Numbers 1-6: todo, wip, merged, post_release, ready to close, a second wip."""
+    workspace.add_item("todo_item", "--tags", "back")
+    workspace.start_item(workspace.add_item("wip_item", "--tags", "back"))
+    workspace.add_merged_unit("merged_item")
+    post = workspace.add_merged_unit("post_item")
+    workspace.add_check(post, "check")
+    workspace.release(f"{post}/engine")
+    workspace.finish_units(workspace.add_item("ready_item"))
+    workspace.start_item(workspace.add_item("wip_two"))
+
+
+def listed_numbers(page: str) -> list[int]:
+    return [
+        int(n) for n in re.findall(r'class="rowlink"><td class="addr">(\d+)<', page)
+    ]
+
+
+def test_all_items_are_sorted_by_readiness_by_default(
+    viewer: Viewer, workspace: Backlog
+) -> None:
+    build_one_item_per_stage(workspace)
+    assert listed_numbers(viewer.get("/ws/items")) == [5, 4, 3, 2, 6, 1]
+    reversed_page = viewer.get("/ws/items?sort=readiness&dir=desc")
+    assert listed_numbers(reversed_page) == [1, 6, 2, 3, 4, 5]
+    assert '<th aria-sort="descending"><a class="sort desc"' in reversed_page
+    assert listed_numbers(viewer.get("/ws/items?sort=number")) == [1, 2, 3, 4, 5, 6]
+    filtered = viewer.get("/ws/items?tag=back")
+    assert listed_numbers(filtered) == [2, 1]
+    assert 'href="/ws/items?tag=back&amp;sort=readiness&amp;dir=desc"' in filtered
+    assert 'href="/ws/items?tag=back&amp;sort=title&amp;dir=asc"' in filtered
+
+
+def test_the_stage_follows_the_least_advanced_open_unit(workspace: Backlog) -> None:
+    number = workspace.add_merged_unit("mixed")
+    registry = Workspace.open(workspace.home, "ws").load_registry()
+    item = registry.find_item(number).item
+    assert item.readiness == Readiness.MERGED
+    workspace.add_unit(number, "other")
+    registry = Workspace.open(workspace.home, "ws").load_registry()
+    assert registry.find_item(number).item.readiness == Readiness.WIP
+
+
+def test_a_shared_pr_links_to_the_other_units_on_the_card(
+    viewer: Viewer, workspace: Backlog
+) -> None:
+    first = workspace.add_merged_unit("one", pr_number=5)
+    second = workspace.add_item("two")
+    workspace.add_unit(second, "fix")
+    workspace.ok_line(f"{second}/fix link pr acme/api#5")
+    card = viewer.get(f"/ws/items/{second}")
+    assert (
+        f'<span class="who">shared with <a href="/ws/items/{first}#u-engine">'
+        f"{first}/engine</a></span>" in card
+    )
+    assert "shared with" in viewer.get(f"/ws/items/{first}")
+    workspace.ok_line(f"{second}/fix link pr acme/api#6")
+    assert "shared with" not in viewer.get(f"/ws/items/{second}")

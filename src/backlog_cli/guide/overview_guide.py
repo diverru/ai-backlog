@@ -144,8 +144,9 @@ Enforced by the CLI (a command that breaks one is refused and changes nothing):
   - Post-release work is decided before a release (actions, or
     --no-post-release). A confirmation is final. After `post_release fail` the
     action is settled only after a unit added after the finding is released.
-  - One PR belongs to one unit of the active items. A repeated `merged` or
-    `released` needs --correction "why".
+  - One PR may close units of several items: `merged` is written to every unit
+    of that PR, and `released` must list every unit of that PR in one address.
+    A repeated `merged` or `released` needs --correction "why".
   - `done` needs every unit finished, one unit done, no open blocker, no pending
     action and every dependency archived as done. A dependency must exist and
     must not close a cycle.

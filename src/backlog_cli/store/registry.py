@@ -11,8 +11,8 @@ from backlog_cli.domain.address import Address
 from backlog_cli.domain.item import Item
 from backlog_cli.domain.part import PrRef
 from backlog_cli.domain.situation import ItemSituation
-from backlog_cli.domain.unit import Unit
-from backlog_cli.domain.vocabulary import Outcome
+from backlog_cli.domain.unit import PrUnit, Unit
+from backlog_cli.domain.vocabulary import Outcome, UnitStatus
 from backlog_cli.errors import Refusal, UsageError
 from backlog_cli.moment import Moment
 from backlog_cli.store.yamlfile import YamlFile
@@ -55,6 +55,14 @@ class Target:
                 f"{self.address}: item {self.item.number} is archived and read-only; "
                 + self.item.describe_next_item_step()
             )
+
+
+@dataclass(frozen=True)
+class PrSibling:
+    """Another unit that carries the same PR."""
+
+    address: str
+    unit: PrUnit
 
 
 class Registry:
@@ -254,17 +262,23 @@ class Registry:
             for dependency_id in item.depends_on
         }
 
-    def find_other_unit_with_pr(self, pr: PrRef, item: Item, unit: Unit) -> str | None:
-        """The address of another unit of an active item that has this PR."""
+    def find_units_sharing_pr(
+        self, pr: PrRef, item: Item, unit: Unit
+    ) -> list[PrSibling]:
+        """The other open or finished units of the active items with this PR."""
+        found = []
         for other_item in self.active:
             for other in other_item.work:
                 pr_unit = other.get_pr_unit()
                 if pr_unit is None or pr_unit.pr != pr:
                     continue
-                if other_item is item and other is unit:
+                if (other_item is item and other is unit) or other.status in (
+                    UnitStatus.CANCELLED,
+                    UnitStatus.SUPERSEDED,
+                ):
                     continue
-                return f"{other_item.number}/{other.id}"
-        return None
+                found.append(PrSibling(f"{other_item.number}/{other.id}", pr_unit))
+        return found
 
     def get_situation(self, item: Item) -> ItemSituation:
         return ItemSituation.of(

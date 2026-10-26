@@ -3,13 +3,15 @@
 from dataclasses import dataclass
 
 from backlog_cli.domain.action import Action
-from backlog_cli.domain.part import Correction
+from backlog_cli.domain.item import Item
+from backlog_cli.domain.part import Correction, PrRef
 from backlog_cli.domain.unit import PrUnit, ResearchUnit, Unit
 from backlog_cli.domain.vocabulary import ActionStatus, UnitStatus
 from backlog_cli.serve.anchor import Anchor
 from backlog_cli.serve.path_links import PathLinks
 from backlog_cli.serve.reasons import ReasonText
 from backlog_cli.serve.text import HtmlText, LocalDate
+from backlog_cli.serve.view import WorkspaceView
 
 
 @dataclass
@@ -154,12 +156,16 @@ class UnitCards:
     }
 
     @classmethod
-    def render(cls, units: list[Unit]) -> str:
-        cards = "".join(cls._render_unit(u, n) for n, u in enumerate(units, 1))
+    def render(cls, view: WorkspaceView, item: Item) -> str:
+        cards = "".join(
+            cls._render_unit(view, item, u, n) for n, u in enumerate(item.work, 1)
+        )
         return f'<div class="units">{cards}</div>'
 
     @classmethod
-    def _render_unit(cls, unit: Unit, number: int) -> str:
+    def _render_unit(
+        cls, view: WorkspaceView, item: Item, unit: Unit, number: int
+    ) -> str:
         esc = HtmlText.esc
         stops = "".join(
             cls._render_stop(label, station)
@@ -178,7 +184,7 @@ class UnitCards:
             f'id="{Anchor.unit(unit.id)}"><div class="unit-top">'
             f'<span class="num">{number}.</span>'
             f'<span class="uname">{esc(unit.id)}</span>'
-            f'<span class="tag">{esc(unit.kind)}</span>{cls._render_owner(unit)}'
+            f'<span class="tag">{esc(unit.kind)}</span>{cls._render_owner(view, item, unit)}'
             f"{ReasonText.unit_pill(unit)}</div>"
             f'<div class="route">{stops}</div>{actions}</article>'
         )
@@ -202,8 +208,8 @@ class UnitCards:
             f'<span class="lbl">{label}</span>{when}</div>'
         )
 
-    @staticmethod
-    def _render_owner(unit: Unit) -> str:
+    @classmethod
+    def _render_owner(cls, view: WorkspaceView, item: Item, unit: Unit) -> str:
         esc = HtmlText.esc
         who = " · ".join(esc(assignee.short_text) for assignee in unit.assignees)
         who_html = f'<span class="who">{who}</span>' if who else ""
@@ -211,7 +217,24 @@ class UnitCards:
             return who_html or '<span class="who">no assignee</span>'
         if unit.pr is None:
             return f'<span class="who">no PR yet</span>{who_html}'
-        return HtmlText.pr_link(unit.pr) + who_html
+        return (
+            HtmlText.pr_link(unit.pr)
+            + cls._render_shared(view, item, unit, unit.pr)
+            + who_html
+        )
+
+    @staticmethod
+    def _render_shared(view: WorkspaceView, item: Item, unit: Unit, pr: PrRef) -> str:
+        siblings = view.registry.find_units_sharing_pr(pr, item, unit)
+        if not siblings:
+            return ""
+        links = ", ".join(
+            f'<a href="{view.card_url(number, Anchor.unit(unit_id))}">'
+            f"{sibling.address}</a>"
+            for sibling in siblings
+            for number, unit_id in [sibling.address.split("/")]
+        )
+        return f'<span class="who">shared with {links}</span>'
 
     @classmethod
     def _render_action(cls, unit: PrUnit, action: Action) -> str:

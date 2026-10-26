@@ -58,13 +58,9 @@ def test_the_pr_comes_from_link_pr_or_the_flag(workspace: Backlog) -> None:
     workspace.refuse(f"{address} link pr acme/api#8", "merge is already recorded")
 
 
-def test_one_pr_belongs_to_one_unit_in_any_case(workspace: Backlog) -> None:
+def test_the_pr_is_stored_lower_case(workspace: Backlog) -> None:
     first = workspace.add_merged_unit("one", repo="Acme/API", pr_number=777)
     assert workspace.read_unit(first, "engine")["pr"]["repo"] == "acme/api"
-    second = start_unit(workspace, "two")
-    err = workspace.refuse(f"{second}/engine merged --pr acme/api#777 --source s")
-    assert f"{first}/engine" in err
-    workspace.refuse(f"{second}/engine link pr acme/api#777", f"{first}/engine")
 
 
 def test_merged_and_released_need_a_source_and_released_needs_at(

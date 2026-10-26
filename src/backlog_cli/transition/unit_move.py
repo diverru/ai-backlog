@@ -7,16 +7,17 @@ outside its own files.
 
 import shlex
 from collections.abc import Callable
+from dataclasses import replace
 
 from backlog_cli.domain.address import Address
-from backlog_cli.domain.part import PrRef
-from backlog_cli.domain.release import Release
+from backlog_cli.domain.part import Evidence, PrRef
+from backlog_cli.domain.release import Merge, Release
 from backlog_cli.domain.unit import PrUnit, Unit
 from backlog_cli.domain.vocabulary import AddressLevel, MoveStatus, UnitStatus
 from backlog_cli.errors import Hint, Obstacle, Refusal, UsageError
 from backlog_cli.store.registry import Target
 from backlog_cli.moment import Moment
-from backlog_cli.transition.base import AssigneeNote, Move, MoveRequest
+from backlog_cli.transition.base import AssigneeNote, Move, MoveContext, MoveRequest
 
 
 class UnitMove(Move):
@@ -25,6 +26,10 @@ class UnitMove(Move):
         super().check_request(request)
         if request.tag and any(character.isspace() for character in request.tag):
             raise UsageError("--tag must not contain whitespace")
+
+    def __init__(self, request: MoveRequest, context: MoveContext) -> None:
+        super().__init__(request, context)
+        self.extra_lines: list[str] = []  # what a merge did to other units
 
     def apply(self, target: Target) -> list[str]:
         lines = super().apply(target)
@@ -46,7 +51,7 @@ class UnitMove(Move):
             return lines
         return [
             line + suffix if line.startswith(unit_prefix) else line for line in lines
-        ]
+        ] + self.extra_lines
 
     @staticmethod
     def _describe_correction(target: Target) -> list[str]:
@@ -170,36 +175,36 @@ class UnitMove(Move):
         pr = given or unit.pr
         if pr is None:
             raise Refusal("", [self._build_missing_pr_obstacle(address, target.name)])
-        self._require_pr_free(pr, target)
         self.require_observed_not_future("a merge")
         unit.set_pr(pr)
-        unit.record_merge(
-            self.request.get_observed_at(), self.request.build_evidence("merged")
-        )
+        self._record_shared_merge(target, unit, pr)
 
-    def _require_pr_free(self, pr: PrRef, target: Target) -> None:
-        """One PR belongs to one unit of the active items."""
-        other = self.context.registry.find_other_unit_with_pr(
+    def _record_shared_merge(self, target: Target, unit: PrUnit, pr: PrRef) -> None:
+        """One PR, one merge: copy a recorded one, and give it to every open unit."""
+        siblings = self.context.registry.find_units_sharing_pr(
             pr, target.item, target.unit
         )
-        if other is None:
-            return
-        address = str(target.address)
-        hint = Hint(
-            "Give the PR of this unit", f"backlog {address} link pr OWNER/NAME#N"
-        )
-        raise Refusal(
-            "",
-            [
-                Obstacle(
-                    address,
-                    target.name,
-                    f"PR {pr} is already linked to unit {other}",
-                    "PR of another unit",
-                    hint,
-                )
-            ],
-        )
+        recorded = next((s for s in siblings if s.unit.merge is not None), None)
+        if recorded is None:
+            unit.record_merge(
+                self.request.get_observed_at(), self.request.build_evidence("merged")
+            )
+        else:
+            unit.record_merge(*self._copy_merge(recorded.unit.merge))
+            self.extra_lines.append(
+                f"{target.address}: merge copied from {recorded.address} "
+                "(the same PR is already merged there)"
+            )
+        also = [s.address for s in siblings if s.unit.status.is_early]
+        for sibling in siblings:
+            if sibling.unit.status.is_early:
+                sibling.unit.record_merge(*self._copy_merge(unit.merge))
+        if also:
+            self.extra_lines.append(f"also merged: {', '.join(also)}")
+
+    @staticmethod
+    def _copy_merge(merge: Merge) -> tuple[str | None, Evidence]:
+        return merge.merged_at, replace(merge.evidence)
 
     def _correct_merge(self, target: Target, unit: PrUnit, given: PrRef | None) -> None:
         if given is not None and unit.release is not None and given != unit.pr:
@@ -209,8 +214,6 @@ class UnitMove(Move):
                 "record the real situation with a new unit: "
                 f"backlog {target.item.number} unit add NAME --kind pr"
             )
-        if given is not None:
-            self._require_pr_free(given, target)
         observed = self.request.get_observed_at()
         self.require_observed_not_future("a merge")
         if observed and unit.release is not None:
@@ -240,6 +243,7 @@ class UnitMove(Move):
             )
         if unit.status != UnitStatus.MERGED:
             raise Refusal(unit.describe_not_releasable())
+        self._require_whole_pr_group(target, unit)
         no_post_release = self.request.declares_no_post_release(address)
         self.refuse_if_any(
             self._get_post_release_obstacles(unit, address, no_post_release)
@@ -254,6 +258,45 @@ class UnitMove(Move):
             self.request.build_evidence("released"),
         )
         unit.record_release(release, no_post_release)
+
+    def _require_whole_pr_group(self, target: Target, unit: PrUnit) -> None:
+        """A merged unit of the same PR goes out in the same release."""
+        siblings = self.context.registry.find_units_sharing_pr(
+            unit.pr, target.item, target.unit
+        )
+        missing = [
+            sibling.address
+            for sibling in siblings
+            if sibling.unit.status == UnitStatus.MERGED
+            and sibling.address not in self.request.batch
+        ]
+        if not missing:
+            return
+        group = [*self.request.batch, *missing]
+        request = self.request
+        declared = (
+            f" --no-post-release {' '.join(request.no_post_release)}"
+            if request.no_post_release
+            else ""
+        )
+        tag = f" --tag {shlex.quote(request.tag)}" if request.tag else ""
+        command = (
+            f"backlog {','.join(group)} released --at {shlex.quote(request.at)} "
+            f"--source {shlex.quote(request.source)}{tag}{declared}"
+        )
+        raise Refusal(
+            "",
+            [
+                Obstacle(
+                    str(target.address),
+                    unit.label,
+                    f"PR {unit.pr} also closes {', '.join(missing)}, merged but "
+                    "not in this release",
+                    "Same PR, other units",
+                    Hint("Release the whole PR in one command", command),
+                )
+            ],
+        )
 
     def _correct_release(self, target: Target, unit: PrUnit) -> None:
         if unit.release is None:

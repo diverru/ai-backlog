@@ -5,7 +5,12 @@ from urllib.parse import quote
 
 from backlog_cli.serve.rail_filters import RailFilters
 from backlog_cli.serve.text import HtmlText
-from backlog_cli.serve.view import NavSection, PageContent, WorkspaceView
+from backlog_cli.serve.view import (
+    NavSection,
+    PageContent,
+    WorkspaceCount,
+    WorkspaceView,
+)
 
 
 class PageLayout:
@@ -186,6 +191,7 @@ class PageLayout:
         content: PageContent,
         names: list[str],
         view: WorkspaceView | None,
+        counts: dict[str, WorkspaceCount | None],
     ) -> str:
         esc = HtmlText.esc
         where = f" — {esc(view.name)}" if view else ""
@@ -198,7 +204,7 @@ class PageLayout:
             "<noscript><style>.theme{display:none}</style></noscript>\n"
             f"<style>\n{self.css}\n</style>\n</head>\n<body>\n"
             '<div class="app">\n'
-            f"{self._render_rail(content, names, view)}\n"
+            f"{self._render_rail(content, names, view, counts)}\n"
             f"<main>\n{content.body}\n</main>\n</div>\n"
             f"{self.PREVIEW_MARKUP}\n"
             f"<script>\n{self.SWITCH_SCRIPT}\n{self.PREVIEW_SCRIPT}\n{self.ROW_SCRIPT}\n</script>\n"
@@ -210,13 +216,14 @@ class PageLayout:
         content: PageContent,
         names: list[str],
         view: WorkspaceView | None,
+        counts: dict[str, WorkspaceCount | None],
     ) -> str:
         top = ['<div class="brand">backlog<span>.</span></div>']
         mid = []
         if view is not None:
             top.append(self._render_search(view))
         if names:
-            mid.append(self._render_workspaces(content, names, view))
+            mid.append(self._render_workspaces(content, names, view, counts))
         if view is not None:
             mid.append(RailFilters.render(view, content.filter))
         return (
@@ -238,13 +245,20 @@ class PageLayout:
         )
 
     def _render_workspaces(
-        self, content: PageContent, names: list[str], view: WorkspaceView | None
+        self,
+        content: PageContent,
+        names: list[str],
+        view: WorkspaceView | None,
+        counts: dict[str, WorkspaceCount | None],
     ) -> str:
         """Every workspace is a row; the current one lists its pages under it."""
         esc = HtmlText.esc
         rows = []
         for name in names:
-            row = f'<a class="ws-row" href="/{quote(name)}/">{esc(name)}</a>'
+            row = (
+                f'<a class="ws-row" href="/{quote(name)}/">{esc(name)}'
+                f"{self._render_counts(counts.get(name))}</a>"
+            )
             if view is not None and name == view.name:
                 rows.append(
                     f'<div class="ws-item current">{row}'
@@ -253,6 +267,18 @@ class PageLayout:
             else:
                 rows.append(f'<div class="ws-item">{row}</div>')
         return f'<div class="rail-label first">Workspaces</div>{"".join(rows)}'
+
+    @staticmethod
+    def _render_counts(count: WorkspaceCount | None) -> str:
+        if count is None:
+            return ""
+        attention = (
+            f'<span class="count">{count.attention}</span>' if count.attention else ""
+        )
+        return (
+            f'<span class="ws-counts">{attention}'
+            f'<span class="count quiet">{count.active}</span></span>'
+        )
 
     def _render_pages(self, content: PageContent, view: WorkspaceView) -> str:
         counts = {

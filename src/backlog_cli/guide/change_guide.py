@@ -170,10 +170,13 @@ STATUSES  todo, wip, merged, post_release, done, cancelled, superseded.
 
 merged: the PR is merged; --source says how, --at when (default now), --result
   defaults to "merged". The PR comes from --pr or `link pr`; a different --pr is
-  refused. One PR belongs to one unit of the active items.
+  refused. One PR may close units of several items: `merged` is written to
+  every unit of that PR (a unit whose PR is already merged copies that merge).
 released: only from merged. --at is when it reached production (required),
   --tag is optional and has no whitespace. Several units of one release are one
   address: `backlog 43/a,44/b released --at T --source S --no-post-release 44/b`.
+  `released` must list every merged unit of the same PR; the refusal gives the
+  full group.
   The same release is written to each unit. All or nothing: one refusal writes
   nothing, and the hint repeats the whole group with your --at, --source, --tag.
   The post-release decision is per unit: units with actions become post_release;

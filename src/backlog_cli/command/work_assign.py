@@ -7,7 +7,7 @@ from backlog_cli.command.base import Change, MutatingCommand, TextCheck
 from backlog_cli.domain.item import Item
 from backlog_cli.domain.part import Assignee, PrRef
 from backlog_cli.domain.vocabulary import AddressLevel, Outcome
-from backlog_cli.errors import Refusal, UsageError
+from backlog_cli.errors import UsageError
 from backlog_cli.store.registry import Registry, Target
 from backlog_cli.store.workspace import Workspace
 from backlog_cli.transition.base import StatusSnapshot
@@ -120,11 +120,11 @@ class LinkPrCommand(ActionSpec, MutatingCommand):
     ) -> Change:
         target = self.get_active_target(registry, args.address)
         pr = PrRef.from_text(args.pr, "PR")
-        other = registry.find_other_unit_with_pr(pr, target.item, target.unit)
-        if other is not None:
-            raise Refusal(f"PR {pr} is already linked to unit {other}")
+        siblings = registry.find_units_sharing_pr(pr, target.item, target.unit)
         pr_unit = target.unit.get_pr_unit()
         old = pr_unit.pr if pr_unit else None
         target.unit.set_pr(pr)
         before = f"{old} " if old is not None else ""
-        return Change([f"{target.address}: pr {before}-> {target.unit.pr}"])
+        shared = ", ".join(sibling.address for sibling in siblings)
+        note = f" (shared with {shared})" if shared else ""
+        return Change([f"{target.address}: pr {before}-> {target.unit.pr}{note}"])

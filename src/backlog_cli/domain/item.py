@@ -20,7 +20,13 @@ from backlog_cli.domain.part import (
 from backlog_cli.domain.record import Record
 from backlog_cli.domain.title import TitleText
 from backlog_cli.domain.unit import Unit
-from backlog_cli.domain.vocabulary import ItemStatus, Outcome, Priority, UnitStatus
+from backlog_cli.domain.vocabulary import (
+    ItemStatus,
+    Outcome,
+    Priority,
+    Readiness,
+    UnitStatus,
+)
 from backlog_cli.errors import Hint, Obstacle, Refusal, UsageError
 from backlog_cli.moment import Moment
 
@@ -146,6 +152,21 @@ class Item(Record):
             and self.completion is None
             and all(unit.is_terminal for unit in self.work)
         )
+
+    @property
+    def readiness(self) -> Readiness:
+        """The stage of the least advanced open unit."""
+        open_statuses = {u.status for u in self.work if not u.is_terminal}
+        if not open_statuses:
+            has_done = any(u.status == UnitStatus.DONE for u in self.work)
+            return Readiness.READY_TO_CLOSE if has_done else Readiness.TODO
+        if open_statuses == {UnitStatus.POST_RELEASE}:
+            return Readiness.POST_RELEASE
+        if open_statuses <= {UnitStatus.MERGED, UnitStatus.POST_RELEASE}:
+            return Readiness.MERGED
+        if self.current_status == ItemStatus.WIP:
+            return Readiness.WIP
+        return Readiness.TODO
 
     @property
     def done_hint(self) -> str:
