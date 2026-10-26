@@ -1,0 +1,201 @@
+schema_version: 1
+next_id: 8
+archived_outcomes:
+  0001_base_work: done
+archived_item_ids:
+- 0001_base_work
+- 0002_old_idea
+items:
+- id: 0003_search_rt
+  title: Realtime order search
+  priority: high
+  status: wip
+  tags:
+  - back
+  - search
+  due_at: '2030-01-01'
+  remind_at: '2030-02-01'
+  depends_on:
+  - 0001_base_work
+  prerequisite_prs: []
+  blockers:
+  - id: b1
+    description: Needs an administrator
+    waiting_on: admin
+  resolved_blockers:
+  - id: b2
+    description: Needs a decision
+    waiting_on: null
+    resolved_at: '2026-10-25T16:05:40Z'
+    reason: Decided
+  next_blocker_id: 3
+  work:
+  - id: engine
+    kind: pr
+    status: post_release
+    assignees:
+    - project: api
+      task_seq: 470
+      agent: Back agent
+      role: back
+    returns: []
+    pr:
+      repo: acme/api
+      number: 123
+    merge:
+      merged_at: null
+      evidence:
+        source: gh pr view 123
+        result: merged
+        observed_at: null
+        recorded_at: '2026-10-25T16:05:40Z'
+    release:
+      tag: v1.2.0
+      released_at: '2026-10-24T23:59:59Z'
+      evidence:
+        source: release_status
+        result: released
+        observed_at: '2026-10-24T23:59:59Z'
+        recorded_at: '2026-10-25T16:05:40Z'
+    corrections: []
+    post_release_required: true
+    post_release_actions:
+    - id: check_latency
+      kind: verification
+      description: Check search latency
+      instructions: Compare p99 before and after
+      status: pending
+      confirmation: null
+      cancel_reason: null
+      findings:
+      - at: '2026-10-25T16:05:41Z'
+        text: p99 is 4 s
+        source: I read the panel
+        known_units:
+        - engine
+        recorded_at: '2026-10-25T16:05:41Z'
+      cancelled_at: null
+    completion: null
+  - id: study
+    kind: research
+    status: todo
+    assignees: []
+    returns: []
+    completion: null
+  created_at: '2026-10-25T16:05:37Z'
+  updated_at: '2026-10-25T16:05:41Z'
+  completion: null
+- id: 0004_ui_work
+  title: UI work
+  priority: normal
+  status: wip
+  tags:
+  - front
+  due_at: null
+  remind_at: null
+  depends_on: []
+  prerequisite_prs:
+  - repo: acme/web
+    number: 201
+  blockers: []
+  resolved_blockers: []
+  next_blocker_id: 1
+  work:
+  - id: ui
+    kind: pr
+    status: wip
+    assignees:
+    - project: web
+      task_seq: 50
+      agent: Front agent
+      role: null
+    returns: []
+    pr:
+      repo: acme/web
+      number: 202
+    merge: null
+    release: null
+    corrections: []
+    post_release_required: null
+    post_release_actions: []
+    completion: null
+  created_at: '2026-10-25T16:05:37Z'
+  updated_at: '2026-10-25T16:05:41Z'
+  completion: null
+- id: 0005_dead_end
+  title: Dead end
+  priority: normal
+  status: todo
+  tags: []
+  due_at: null
+  remind_at: null
+  depends_on: []
+  prerequisite_prs: []
+  blockers: []
+  resolved_blockers: []
+  next_blocker_id: 1
+  work:
+  - id: engine
+    kind: pr
+    status: cancelled
+    assignees: []
+    returns: []
+    pr: null
+    merge: null
+    release: null
+    corrections: []
+    post_release_required: null
+    post_release_actions: []
+    completion:
+      outcome: cancelled
+      completed_at: '2026-10-25T16:05:42Z'
+      reason: Dropped
+      superseded_by: null
+      evidence: null
+  created_at: '2026-10-25T16:05:37Z'
+  updated_at: '2026-10-25T16:05:42Z'
+  completion: null
+- id: 0006_small_thing
+  title: Small thing
+  priority: normal
+  status: wip
+  tags: []
+  due_at: null
+  remind_at: null
+  depends_on: []
+  prerequisite_prs: []
+  blockers: []
+  resolved_blockers: []
+  next_blocker_id: 1
+  work:
+  - id: study
+    kind: research
+    status: wip
+    assignees:
+    - project: null
+      task_seq: null
+      agent: Researcher
+      role: analyst
+    returns:
+    - at: '2026-10-25T16:05:43Z'
+      reason: Paused
+    completion: null
+  created_at: '2026-10-25T16:05:37Z'
+  updated_at: '2026-10-25T16:05:43Z'
+  completion: null
+- id: 0007_plain
+  title: Plain
+  priority: low
+  status: todo
+  tags: []
+  due_at: null
+  remind_at: null
+  depends_on: []
+  prerequisite_prs: []
+  blockers: []
+  resolved_blockers: []
+  next_blocker_id: 1
+  work: []
+  created_at: '2026-10-25T16:05:38Z'
+  updated_at: '2026-10-25T16:05:38Z'
+  completion: null

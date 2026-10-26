@@ -1,0 +1,10 @@
+# Whitelist: only code is tracked. Workspace data and config.yaml never are.
+/*
+!/.gitignore
+!/AGENTS.md
+!/backlog
+!/src/
+!/tests/
+!/README.md
+__pycache__/
+.pytest_cache/

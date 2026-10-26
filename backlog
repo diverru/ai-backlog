@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "src"))
+
+try:
+    import tap  # noqa: F401
+    import yaml  # noqa: F401
+    import markdown_it  # noqa: F401
+except ImportError as error:
+    sys.exit(f"backlog needs three packages ({error}). Install them with:\n  python3 -m pip install typed-argument-parser pyyaml markdown-it-py")
+
+from backlog_cli.cli import Cli  # noqa: E402
+
+sys.exit(Cli.main())

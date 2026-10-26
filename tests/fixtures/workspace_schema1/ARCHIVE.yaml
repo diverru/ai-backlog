@@ -1,0 +1,101 @@
+schema_version: 1
+items:
+- id: 0001_base_work
+  title: Base work
+  priority: normal
+  status: done
+  tags: []
+  due_at: null
+  remind_at: null
+  depends_on: []
+  prerequisite_prs: []
+  blockers: []
+  resolved_blockers: []
+  next_blocker_id: 1
+  work:
+  - id: engine
+    kind: pr
+    status: done
+    assignees:
+    - project: api
+      task_seq: 100
+      agent: Base agent
+      role: back
+    returns: []
+    pr:
+      repo: acme/api
+      number: 100
+    merge:
+      merged_at: null
+      evidence:
+        source: gh pr view 100, full output
+        result: merged
+        observed_at: null
+        recorded_at: '2026-10-25T16:05:38Z'
+    release:
+      tag: v1.0.0
+      released_at: '2026-10-24T23:59:59Z'
+      evidence:
+        source: release_status
+        result: released
+        observed_at: '2026-10-24T23:59:59Z'
+        recorded_at: '2026-10-25T16:05:38Z'
+    corrections:
+    - at: '2026-10-25T16:05:38Z'
+      subject: merge
+      reason: The first source was too short
+      old_pr:
+        repo: acme/api
+        number: 100
+      old_at: null
+      old_evidence:
+        source: gh pr view 100
+        result: merged
+        observed_at: null
+        recorded_at: '2026-10-25T16:05:38Z'
+      old_tag: null
+    post_release_required: false
+    post_release_actions: []
+    completion:
+      outcome: done
+      completed_at: '2026-10-25T16:05:38Z'
+      reason: null
+      superseded_by: null
+      evidence:
+        source: backlog
+        result: release recorded; no post-release actions required
+        observed_at: null
+        recorded_at: '2026-10-25T16:05:38Z'
+  created_at: '2026-10-25T16:05:36Z'
+  updated_at: '2026-10-25T16:05:39Z'
+  completion:
+    outcome: done
+    completed_at: '2026-10-25T16:05:39Z'
+    reason: null
+    follow_up: null
+    evidence:
+      source: I read the release output and the page
+      result: Base is live
+      observed_at: null
+      recorded_at: '2026-10-25T16:05:39Z'
+- id: 0002_old_idea
+  title: Old idea
+  priority: normal
+  status: cancelled
+  tags: []
+  due_at: null
+  remind_at: null
+  depends_on: []
+  prerequisite_prs: []
+  blockers: []
+  resolved_blockers: []
+  next_blocker_id: 1
+  work: []
+  created_at: '2026-10-25T16:05:37Z'
+  updated_at: '2026-10-25T16:05:39Z'
+  completion:
+    outcome: cancelled
+    completed_at: '2026-10-25T16:05:39Z'
+    reason: Not needed
+    follow_up: null
+    evidence: null
