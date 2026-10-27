@@ -28,9 +28,11 @@ class AttentionPage:
         AttentionGroup.UNSTARTED_UNITS: "g-unassigned",
         AttentionGroup.STUCK: "g-failed",
         AttentionGroup.CAN_START: "g-start",
+        AttentionGroup.EMPTY_BRIEF: "g-start",
     }
     ITEM_NOTES = {
         AttentionGroup.STUCK: "every unit is cancelled or superseded",
+        AttentionGroup.EMPTY_BRIEF: "brief is empty",
     }
 
     @classmethod
@@ -141,7 +143,8 @@ class AttentionPage:
             href = view.card_url(item.number, Anchor.blocker(row.subject))
             return (
                 '<li class="rowlink">'
-                f'<a class="main pill c-failed" href="{href}">{esc(row.subject)}</a>'
+                f'<a class="main pill c-failed" href="{href}" '
+                f'title="blocker {esc(row.subject)}">blocker</a>'
                 f'<span class="uinfo"><span>{PathLinks.html(row.text)}</span>'
                 f"</span>{waiting}</li>"
             )
@@ -161,9 +164,7 @@ class AttentionPage:
         note = notes.get(group, cls.ITEM_NOTES.get(group, ""))
         if not note:
             return ""  # the item head already says it all
-        return (
-            f'<li><span></span><span class="line-note">{note}</span><span></span></li>'
-        )
+        return f'<li><span class="line-note item-note">{note}</span></li>'
 
     @classmethod
     def _render_unit_line(

@@ -11,11 +11,13 @@ class AttentionReport:
 
     @classmethod
     def collect(
-        cls, situations: list[ItemSituation]
+        cls, situations: list[ItemSituation], empty_brief_ids: set[str]
     ) -> dict[AttentionGroup, list[str]]:
         return {
             group: [cls.format(row) for row in rows]
-            for group, rows in AttentionRows.collect(situations).items()
+            for group, rows in AttentionRows.collect(
+                situations, empty_brief_ids
+            ).items()
         }
 
     @staticmethod
@@ -44,5 +46,7 @@ class AttentionReport:
                 return f"{address}: {title}"
             case AttentionGroup.UNSTARTED_UNITS:
                 return f"{address}: {title}: {row.command}"
+            case AttentionGroup.EMPTY_BRIEF:
+                return f"{address} {title}: {row.command}"
             case AttentionGroup.STUCK | AttentionGroup.CAN_START:
                 return f"{address} {title}"

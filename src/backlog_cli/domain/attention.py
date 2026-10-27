@@ -31,18 +31,20 @@ class AttentionRow:
 class AttentionRows:
     @classmethod
     def collect(
-        cls, situations: list[ItemSituation]
+        cls, situations: list[ItemSituation], empty_brief_ids: set[str]
     ) -> dict[AttentionGroup, list[AttentionRow]]:
         groups: dict[AttentionGroup, list[AttentionRow]] = {
             group: [] for group in AttentionGroup
         }
         for situation in situations:
-            for row in cls._read_item(situation):
+            for row in cls._read_item(situation, empty_brief_ids):
                 groups[row.group].append(row)
         return {group: rows for group, rows in groups.items() if rows}
 
     @classmethod
-    def _read_item(cls, situation: ItemSituation) -> list[AttentionRow]:
+    def _read_item(
+        cls, situation: ItemSituation, empty_brief_ids: set[str]
+    ) -> list[AttentionRow]:
         item = situation.item
         number, title = item.number, item.title
         rows = [
@@ -87,6 +89,16 @@ class AttentionRows:
             rows.append(AttentionRow(AttentionGroup.STUCK, number, None, title))
         if situation.can_start:
             rows.append(AttentionRow(AttentionGroup.CAN_START, number, None, title))
+        if item.id in empty_brief_ids:
+            rows.append(
+                AttentionRow(
+                    AttentionGroup.EMPTY_BRIEF,
+                    number,
+                    None,
+                    title,
+                    command=f"backlog {number} brief set --from-file FILE",
+                )
+            )
         return rows
 
     @staticmethod

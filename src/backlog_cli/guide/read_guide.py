@@ -52,7 +52,7 @@ Filters (all optional, combined with AND):
                          failed post-release checks, pending actions, merged
                          units waiting for a release, wip without an assignee,
                          todo units of a wip item, stuck items, "Can start
-                         now". Nothing found prints `Nothing needs
+                         now", "Empty brief". Nothing found prints `Nothing needs
                          attention.` Not with --archive.
   --archive              the archive instead: number, outcome, title
 
@@ -112,6 +112,10 @@ character, no bidi mark). It must not mention the central files (the data root
 path, `.bklg`, `BACKLOG.yaml`, `ARCHIVE.yaml`, `details/`, in any case): the
 executor receives the whole file. The details of an archived item can be read
 but not changed. Every change takes --dry-run.
+
+A command that touches an item with an empty `Problem and expected result`
+section prints `Note: the brief of N is empty...` after its output (the exit code
+stays 0), and `list --attention` lists the item under "Empty brief".
 
 backlog N brief show [--section NAME]
   The whole file, or the body of one section (NAME is the exact heading).

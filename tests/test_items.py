@@ -10,7 +10,7 @@ def test_add_stores_the_defaults_and_creates_the_details_file(
     workspace: Backlog,
 ) -> None:
     out = workspace.ok_line('add fast_order --title "Fast order"')
-    assert out.strip() == "Created item 1 (0001_fast_order)"
+    assert out.splitlines()[0] == "Created item 1 (0001_fast_order)"
     item = workspace.read_item(1)
     assert (item["priority"], item["status"], item["work"]) == ("normal", "todo", [])
     assert item["due_at"] is None and item["completion"] is None

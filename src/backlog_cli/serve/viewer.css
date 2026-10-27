@@ -289,6 +289,7 @@ mark { background: var(--signal-wash); color: var(--ink); border-bottom: 2px sol
 .subs .uinfo { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; align-items: baseline; min-width: 0; }
 .subs .uinfo .sub { overflow-wrap: anywhere; }
 .subs .line-note { grid-column: 2 / -1; color: var(--ink-2); font-size: 0.8125rem; }
+.subs .line-note.item-note { grid-column: 1 / -1; }
 .subs .line-note.bad { color: var(--failed); }
 .subs .line-note code { color: var(--ink-3); }
 .subs .warn { color: var(--failed); font-size: 0.8125rem; grid-column: 1 / -1; }
@@ -551,10 +552,8 @@ h2 .slug { font-weight: 400; }
 .pg:hover { background: rgba(255, 255, 255, 0.06); color: var(--rail-ink); }
 .pg[aria-current="page"] { background: rgba(255, 255, 255, 0.10); color: var(--rail-ink); font-weight: 600; }
 .pg[aria-current="page"]::before { content: ""; position: absolute; left: calc(0.95rem - 0.5px); top: 0.25rem; bottom: 0.25rem; width: 2px; margin-left: -0.5px; background: var(--signal); }
-.ws-counts { margin-left: auto; display: flex; align-items: center; gap: 0.25rem; flex: none; }
-.ws-row .count, .pg .count { margin-left: auto; min-width: 1.5rem; text-align: center; font-size: 0.75rem; font-weight: 650; border-radius: 999px; padding: 0 0.4rem; background: var(--signal); color: #1a1300; }
+.ws-row .count, .pg .count { margin-left: auto; min-width: 1.5rem; text-align: center; font-size: 0.75rem; font-weight: 650; border-radius: 999px; padding: 0 0.4rem; background: transparent; color: var(--signal); }
 .ws-row .count.quiet, .pg .count.quiet { background: transparent; color: var(--rail-ink-2); font-weight: 500; }
-.ws-counts .count { margin-left: 0; }
 .f-sub { font-size: 0.75rem; font-weight: 500; color: var(--rail-ink-2); margin: 0.6rem 0 0.35rem; padding-left: 0.5rem; }
 .chips { display: flex; flex-wrap: wrap; gap: 0.3rem; padding-left: 0.25rem; }
 .fchip { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 999px; background: rgba(255, 255, 255, 0.06); color: var(--rail-ink); text-decoration: none; cursor: pointer; --c: var(--focus); }

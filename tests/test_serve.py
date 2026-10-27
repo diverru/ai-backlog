@@ -121,8 +121,8 @@ def test_no_workspace_shows_how_to_bind_and_two_are_listed(backlog: Backlog) -> 
         reply = started.request("/")
         assert (reply.status, reply.headers["Location"]) == (302, "/alpha/")
         page = started.get("/alpha/")
-        assert '<a class="ws-row" href="/alpha/">alpha<span class="ws-counts">' in page
-        assert '<a class="ws-row" href="/zeta/">zeta<span class="ws-counts">' in page
+        assert '<a class="ws-row" href="/alpha/">alpha</a>' in page
+        assert '<a class="ws-row" href="/zeta/">zeta</a>' in page  # nothing waits
         assert "<select" not in page and 'href="/alpha/items"' in page
         assert 'class="ws-pages"' not in started.get("/zeta/").split("zeta")[0]
         assert started.request("/_/go?ws=zeta&to=items").status == 404
@@ -689,17 +689,13 @@ def test_rail_filters_and_sortable_headers_keep_each_other(
     assert "<h1>Archive</h1>" in archive and 'class="f-wide"' in archive
 
 
-def ws_counts(page: str, name: str) -> str | None:
-    """The counts shown in the rail row of one workspace, as `attention/active`."""
+def ws_counts(page: str, name: str) -> list[str]:
+    """The numbers shown in the rail row of one workspace."""
     row = re.search(rf'<a class="ws-row" href="/{name}/">(.*?)</a>', page).group(1)
-    numbers = re.findall(r'<span class="count( quiet)?">(\d+)</span>', row)
-    if not numbers:
-        return None
-    attention = next((n for quiet, n in numbers if not quiet), "-")
-    return f"{attention}/{next(n for quiet, n in numbers if quiet)}"
+    return re.findall(r'<span class="count"[^>]*>(\d+)</span>', row)
 
 
-def test_every_workspace_row_shows_its_attention_and_active_counts(
+def test_closed_workspace_rows_show_their_attention_count(
     viewer: Viewer, workspace: Backlog
 ) -> None:
     build_demo(workspace)
@@ -712,14 +708,18 @@ def test_every_workspace_row_shows_its_attention_and_active_counts(
         workspace.ok("--workspace", "zeta", "add", slug, "--title", slug)
     workspace.ok("--workspace", "zeta", "1", "cancel", "--reason", "x")
     workspace.workspace_file("ARCHIVE.yaml", "zeta").write_text("not yaml: [")
-    for path in ("/ws/", "/zeta/items", "/ws/items/1"):
+    for path in ("/ws/", "/ws/items/1"):
         page = viewer.get(path)
-        assert ws_counts(page, "ws") == "2/2"  # the failed check and the empty item
-        assert ws_counts(page, "zeta") == "2/2"  # two empty items; one is archived
-        assert ws_counts(page, "omega") == "-/0"  # no attention: no badge
+        assert ws_counts(page, "ws") == []  # open: its pages show the counts
+        assert ws_counts(page, "zeta") == [
+            "4"
+        ]  # two items: can start and empty brief each
+        assert ws_counts(page, "omega") == []  # no attention: no number
+    page = viewer.get("/zeta/items")
+    assert ws_counts(page, "zeta") == []
+    assert ws_counts(page, "ws") == ["4"]  # failed check, can start, two empty briefs
     workspace.workspace_file("BACKLOG.yaml", "zeta").write_text("items: [unclosed")
-    page = viewer.get("/ws/")
-    assert ws_counts(page, "zeta") is None and ws_counts(page, "ws") is not None
+    assert ws_counts(viewer.get("/ws/"), "zeta") == []
 
 
 def build_one_item_per_stage(workspace: Backlog) -> None:

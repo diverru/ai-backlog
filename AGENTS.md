@@ -33,6 +33,9 @@ renders the briefs).
 
 ## Behaviour rules
 
+- An empty brief is a blank `Problem and expected result` section of an active
+  item (`Workspace.has_empty_brief`; an unreadable file is not empty). A command
+  that writes prints a hint for each touched item; it never blocks.
 - The files are written only by this tool; the loader does not defend against
   hand edits. User input is validated with clear errors and no traceback (exit
   2); refused transitions list every obstacle with the next command (exit 1).

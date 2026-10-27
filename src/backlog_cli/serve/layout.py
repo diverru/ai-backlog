@@ -8,7 +8,6 @@ from backlog_cli.serve.text import HtmlText
 from backlog_cli.serve.view import (
     NavSection,
     PageContent,
-    WorkspaceCount,
     WorkspaceView,
 )
 
@@ -191,7 +190,7 @@ class PageLayout:
         content: PageContent,
         names: list[str],
         view: WorkspaceView | None,
-        counts: dict[str, WorkspaceCount | None],
+        counts: dict[str, int | None],
     ) -> str:
         esc = HtmlText.esc
         where = f" — {esc(view.name)}" if view else ""
@@ -216,7 +215,7 @@ class PageLayout:
         content: PageContent,
         names: list[str],
         view: WorkspaceView | None,
-        counts: dict[str, WorkspaceCount | None],
+        counts: dict[str, int | None],
     ) -> str:
         top = ['<div class="brand">backlog<span>.</span></div>']
         mid = []
@@ -249,7 +248,7 @@ class PageLayout:
         content: PageContent,
         names: list[str],
         view: WorkspaceView | None,
-        counts: dict[str, WorkspaceCount | None],
+        counts: dict[str, int | None],
     ) -> str:
         """Every workspace is a row; the current one lists its pages under it."""
         esc = HtmlText.esc
@@ -257,7 +256,7 @@ class PageLayout:
         for name in names:
             row = (
                 f'<a class="ws-row" href="/{quote(name)}/">{esc(name)}'
-                f"{self._render_counts(counts.get(name))}</a>"
+                f"{self._render_attention_count(counts.get(name))}</a>"
             )
             if view is not None and name == view.name:
                 rows.append(
@@ -269,15 +268,11 @@ class PageLayout:
         return f'<div class="rail-label first">Workspaces</div>{"".join(rows)}'
 
     @staticmethod
-    def _render_counts(count: WorkspaceCount | None) -> str:
-        if count is None:
+    def _render_attention_count(attention: int | None) -> str:
+        if not attention:
             return ""
-        attention = (
-            f'<span class="count">{count.attention}</span>' if count.attention else ""
-        )
         return (
-            f'<span class="ws-counts">{attention}'
-            f'<span class="count quiet">{count.active}</span></span>'
+            f'<span class="count" title="Items that need attention">{attention}</span>'
         )
 
     def _render_pages(self, content: PageContent, view: WorkspaceView) -> str:

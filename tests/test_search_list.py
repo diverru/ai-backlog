@@ -257,6 +257,7 @@ def test_attention_shows_each_group_and_omits_the_empty_ones(
         "Merged, waiting for release:",
         "In progress without an assignee:",
         "Stuck (every unit cancelled or superseded):",
+        "Empty brief:",
     ]
     assert f"  {first} blocker b1: Needs an admin (waiting on admin)" in out
     assert f"{action}/engine check check: Check check" in out

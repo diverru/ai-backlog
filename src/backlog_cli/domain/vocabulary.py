@@ -134,6 +134,7 @@ class AttentionGroup(StrEnum):
     UNSTARTED_UNITS = "Units without an assignee"
     STUCK = "Stuck (every unit cancelled or superseded)"
     CAN_START = "Can start now"
+    EMPTY_BRIEF = "Empty brief"
 
 
 class DetailsSection(StrEnum):

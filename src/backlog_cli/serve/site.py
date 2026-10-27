@@ -143,10 +143,11 @@ class Site:
         names: list[str] | None = None,
     ) -> Response:
         names = self.list_workspaces() if names is None else names
+        # the open workspace already shows these counts on its pages
         counts = {
-            name: view.count
+            name: None
             if view is not None and name == view.name
-            else WorkspaceView.read_count(self.home, name)
+            else WorkspaceView.read_attention_count(self.home, name)
             for name in names
         }
         return Response(status, self.layout.render(content, names, view, counts))

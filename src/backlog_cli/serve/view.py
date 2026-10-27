@@ -52,14 +52,6 @@ class PageContent:
     filter: ItemFilter = ItemFilter()
 
 
-@dataclass(frozen=True)
-class WorkspaceCount:
-    """The two numbers on a workspace row of the rail."""
-
-    attention: int
-    active: int
-
-
 @dataclass
 class WorkspaceView:
     home: Path
@@ -76,7 +68,9 @@ class WorkspaceView:
 
     @cached_property
     def attention(self) -> dict[AttentionGroup, list[AttentionRow]]:
-        return AttentionRows.collect(self.situations)
+        return AttentionRows.collect(
+            self.situations, self.workspace.find_empty_brief_ids(self.registry)
+        )
 
     @property
     def attention_count(self) -> int:
@@ -87,16 +81,12 @@ class WorkspaceView:
         """From BACKLOG.yaml, so the archive file stays closed."""
         return len(self.registry.archived_item_ids)
 
-    @property
-    def count(self) -> WorkspaceCount:
-        return WorkspaceCount(self.attention_count, len(self.registry.active))
-
     @classmethod
-    def read_count(cls, home: Path, name: str) -> WorkspaceCount | None:
+    def read_attention_count(cls, home: Path, name: str) -> int | None:
         """From the BACKLOG file only; a workspace that cannot be read has none."""
         try:
             workspace = Workspace.open(home, name)
-            return cls(home, workspace, workspace.load_registry()).count
+            return cls(home, workspace, workspace.load_registry()).attention_count
         except Exception:  # the rail must not turn a broken neighbour into an error
             return None
 

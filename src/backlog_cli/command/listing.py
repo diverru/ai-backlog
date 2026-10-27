@@ -64,7 +64,7 @@ class ListCommand(WorkspaceCommand):
         if not self.found_by_repo:
             self.print_lines(f"workspace: {workspace.name}")
         if args.attention:
-            self._print_attention(situations)
+            self._print_attention(situations, workspace.find_empty_brief_ids(registry))
             return 0
         if not situations:
             self.print_lines("No items.")
@@ -76,8 +76,10 @@ class ListCommand(WorkspaceCommand):
                 self.print_lines(*self._format_active(situation))
         return 0
 
-    def _print_attention(self, situations: list[ItemSituation]) -> None:
-        groups = AttentionReport.collect(situations)
+    def _print_attention(
+        self, situations: list[ItemSituation], empty_brief_ids: set[str]
+    ) -> None:
+        groups = AttentionReport.collect(situations, empty_brief_ids)
         if not groups:
             self.print_lines("Nothing needs attention.")
             return

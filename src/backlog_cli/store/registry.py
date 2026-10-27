@@ -306,19 +306,24 @@ class Registry:
         """The active items as plain data, to tell afterwards which changed."""
         return {item.id: item.to_dict() for item in self.active}
 
-    def settle_changed(self, snapshot: dict[str, dict], extra_ids: set[str]) -> None:
+    def settle_changed(
+        self, snapshot: dict[str, dict], extra_ids: set[str]
+    ) -> list[Item]:
         """Recalculate the status and the update time of every touched item.
 
         Touched: its data changed since the snapshot, it is new, or `extra_ids`
-        names it (its details file was rewritten).
+        names it (its details file was rewritten). Returns the touched items.
         """
         loaded_archive = self._archived or []
+        touched = []
         for item in [*self.active, *loaded_archive]:
             before = snapshot.get(item.id)
             is_new = before is None and item in self.active
             is_changed = before is not None and before != item.to_dict()
             if is_new or is_changed or item.id in extra_ids:
                 item.settle()
+                touched.append(item)
+        return touched
 
     def get_active_dependents(self, item: Item) -> list[Item]:
         return [other for other in self.active if item.id in other.depends_on]

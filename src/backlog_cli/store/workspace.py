@@ -9,7 +9,9 @@ from pathlib import Path
 
 import yaml
 
+from backlog_cli.domain.details_file import DetailsFile
 from backlog_cli.domain.item import Item
+from backlog_cli.domain.vocabulary import DetailsSection
 from backlog_cli.errors import Refusal, UsageError
 from backlog_cli.store.atomic import AtomicFile, FileLock
 from backlog_cli.store.registry import ArchiveContent, Registry
@@ -130,6 +132,21 @@ class Workspace:
 
     def read_details(self, item_id: str) -> str:
         return self.get_details_path(item_id).read_text(encoding="utf-8")
+
+    def has_empty_brief(self, item_id: str, text: str | None = None) -> bool:
+        """The Problem section is blank, in `text` or else in the file. A file that
+        cannot be read or parsed is not empty: the hint must never be an error.
+        """
+        try:
+            details = DetailsFile.parse(
+                self.read_details(item_id) if text is None else text
+            )
+        except (OSError, ValueError, UsageError):
+            return False
+        return not details.get_section(DetailsSection.PROBLEM).strip()
+
+    def find_empty_brief_ids(self, registry: Registry) -> set[str]:
+        return {item.id for item in registry.active if self.has_empty_brief(item.id)}
 
     def write_details(self, item_id: str, text: str) -> None:
         AtomicFile.write(self.get_details_path(item_id), text)

@@ -13,6 +13,7 @@ from typing import ClassVar, NoReturn, TextIO
 
 from tap import Tap
 
+from backlog_cli.domain.item import Item
 from backlog_cli.errors import UsageError
 from backlog_cli.store.binding import BindingConfig
 from backlog_cli.store.repo_origin import RepoOrigin
@@ -385,7 +386,7 @@ class WorkspaceCommand(Command):
                 self.print_lines(f"Recovered interrupted archive of {item_id}")
             snapshot = registry.take_snapshot()
             change = make_change(args, workspace, registry)
-            registry.settle_changed(snapshot, set(change.new_details))
+            touched = registry.settle_changed(snapshot, set(change.new_details))
             if args.dry_run:
                 self.print_lines(
                     "Dry run, nothing written. These changes would be made:"
@@ -393,7 +394,27 @@ class WorkspaceCommand(Command):
             else:
                 workspace.save(registry, change.new_details)
             self.print_lines(*change.lines)
+            self._print_empty_brief_hints(workspace, registry, touched, change)
         return 0
+
+    def _print_empty_brief_hints(
+        self,
+        workspace: Workspace,
+        registry: Registry,
+        touched: list[Item],
+        change: Change,
+    ) -> None:
+        """A reminder, never an error: the exit code stays as it was."""
+        active_ids = {item.id for item in registry.active}
+        for item in sorted(touched, key=lambda item: item.number):
+            is_empty = item.id in active_ids and workspace.has_empty_brief(
+                item.id, change.new_details.get(item.id)
+            )
+            if is_empty:
+                self.print_lines(
+                    f"Note: the brief of {item.number} is empty. "
+                    f"Fill it: backlog {item.number} brief set --from-file FILE"
+                )
 
 
 class MutatingCommand(WorkspaceCommand):
