@@ -2,6 +2,7 @@
 
 import re
 import shlex
+from pathlib import Path
 
 import pytest
 
@@ -9,7 +10,9 @@ from backlog_cli.cli import Cli
 from backlog_cli.command.guide import GuideCommand
 from backlog_cli.command.router import ActionTable
 from backlog_cli.domain.vocabulary import AddressLevel
+from backlog_cli.guide.markdown_guide import MarkdownGuide
 from backlog_cli.guide.overview_guide import OverviewGuide
+from backlog_cli.guide.readme_guide import ReadmeGuide
 from conftest import Backlog, OldWords
 
 ROOT_LINE_LIMIT = 30
@@ -242,3 +245,24 @@ def test_date_flags_say_what_a_date_alone_means(backlog: Backlog) -> None:
         assert date_help in out and "not in the future" not in out, arguments
     assert "--no-post-release 44/api" in backlog.ok("1/engine", "released", "--help")
     assert "--correction" in backlog.ok("--help")
+
+
+def test_the_readme_holds_the_current_guide() -> None:
+    readme = Path(__file__).resolve().parents[1] / "README.md"
+    text = readme.read_text()
+    assert ReadmeGuide.refresh(text) == text, (
+        "README.md is stale: run python3 tools/update_readme.py"
+    )
+
+
+def test_markdown_keeps_prose_plain_and_fences_commands() -> None:
+    text = "Plain words.\n\n  indented line\n\nOne:\nbacklog 1 done\n"
+    assert MarkdownGuide.convert_text(text) == (
+        "Plain words.\n\n```text\n  indented line\n```\n\n"
+        "```text\nOne:\nbacklog 1 done\n```"
+    )
+
+
+def test_guide_markdown_starts_with_a_title(backlog: Backlog) -> None:
+    assert backlog.ok("guide", "overview", "--markdown").startswith("## Overview\n")
+    assert "## Post release" in backlog.ok("guide", "post_release", "--markdown")

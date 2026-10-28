@@ -4,7 +4,8 @@
 inside them (a PR to merge and release, or a piece of research), the post-release
 actions of a PR, and one details file per item, for one workspace. The data lives in `~/.bklg/<workspace>/` (or `$BKLG_HOME`) and is
 written only by this tool. The user manual is `backlog guide all`; read it before
-changing behaviour and keep it true: every behaviour change updates the guide.
+changing behaviour and keep it true: every behaviour change updates the guide,
+then run `python3 tools/update_readme.py`.
 
 ## Layout
 
@@ -26,6 +27,10 @@ changing behaviour and keep it true: every behaviour change updates the guide.
   - `guide/` — the text of `backlog guide`.
   - `serve/` — `backlog serve`: the read-only web viewer (`Site` routes a GET to a
     page; one module per page; `viewer.css` is inlined into every page).
+- `tools/update_readme.py` — rebuilds the generated part of `README.md` (guide sections
+  and the command list) from `guide/readme_guide.py`.
+- `README.md` — hand-written top and bottom; the part between the `guide:` markers is
+  generated.
 - `tests/` — pytest, by rule. Run from this directory: `python3 -m pytest -q`.
 
 Dependencies: Python 3.14, PyYAML, typed-argument-parser, markdown-it-py (the viewer

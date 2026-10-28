@@ -5,6 +5,7 @@
 !/backlog
 !/src/
 !/tests/
+!/tools/
 !/README.md
 __pycache__/
 .pytest_cache/

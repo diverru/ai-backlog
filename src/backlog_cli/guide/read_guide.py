@@ -155,6 +155,7 @@ Finder or copy the path; a folder offers Finder or copy. Open and reveal run
 the macOS `open` command, the only program the viewer starts. Requests with a
 foreign Host header, and an open request from another origin, are refused.
 Pages of a workspace:
+
   /NAME/               what needs attention (the groups of `list --attention`)
   /NAME/items          active items; filters status and tag, sort (default:
                        closest to closing first, by the least advanced unit)
@@ -164,6 +165,7 @@ Pages of a workspace:
   /NAME/archive        archived items, newest first
   /NAME/search?q=...   `search`; add &regex=1 for a regular expression and
                        &archive=1 for the archive
+
 `/` opens the first workspace. The archive file is opened only by the archive
 pages, the archive search and the card of an archived item.
 Every workspace in the rail shows its attention and active item counts, read
@@ -172,6 +174,7 @@ from its BACKLOG file only.
 To keep it running, save a launchd job as
 ~/Library/LaunchAgents/local.backlog.serve.plist (backlog does not install it)
 and load it with `launchctl load` on that file:
+
   <?xml version="1.0" encoding="UTF-8"?>
   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -186,6 +189,7 @@ and load it with `launchctl load` on that file:
   </dict></plist>
 
 Examples:
+
   backlog serve
   backlog serve --port 9000
 """

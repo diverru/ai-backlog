@@ -3,12 +3,12 @@
 
 class OverviewGuide:
     PURPOSE = """\
-backlog keeps the coordinator's list of work for one workspace. It is the only way to change that list: items, the units of work
+The tool `backlog` keeps the coordinator's list of work for one workspace. It is the only way to change that list: items, the units of work
 inside them (a PR to merge and release, or a piece of research), the post-release
 actions of a PR, and a details file per item. Everything it stores and prints is
 English. Run `backlog guide` once at the start: it prints this overview and the
 lifecycle. `backlog guide SECTION` prints one section; `backlog guide all` the
-full manual.
+full manual. With `--markdown` the same text is printed as Markdown.
 
 Found a problem in backlog? Do not edit its code or files; report it to the user
 with the command, the output and what you expected.
@@ -27,11 +27,12 @@ Unit statuses: todo, wip, merged, post_release, done, cancelled, superseded."""
 
     WORKSPACE = """\
 A workspace is an area of coordination. Its data lives under the data root
-(`~/.bklg`, or the directory in $BKLG_HOME): <root>/<workspace>/BACKLOG.yaml,
+(`~/.bklg`, or the directory in $BKLG_HOME): `<root>/<workspace>/BACKLOG.yaml`,
 ARCHIVE.yaml and details/. The files are written only by this tool; never edit
 them. ARCHIVE.yaml is read only by a command that needs archived data.
 
 Which workspace a command uses:
+
   1. --workspace NAME, before or after the command name (one command);
   2. else the nearest bound directory, from the current one up to /;
   3. else the workspace bound to the origin repository of the current directory
@@ -40,7 +41,9 @@ Which workspace a command uses:
 
 Bind a PARENT directory once and every directory below it resolves; if a project
 keeps its task worktrees in one directory, bind that directory:
+
   backlog bind work --dir ~/src/project-worktrees
+
 There is no "last used workspace": parallel coordinators never write to each
 other's workspace by accident."""
 
@@ -100,6 +103,7 @@ workspace is number 1; `add` prints the number of every new item.
      `backlog 1`.
 
 Other actions:
+
   - Back from wip to todo (the only way back): `backlog N/UNIT return_to_todo
     --reason "..."`. `unassign` changes no status.
   - A unit that will not be done: `backlog 1/engine cancel --reason "..."` or

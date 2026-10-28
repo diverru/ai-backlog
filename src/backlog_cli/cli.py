@@ -80,7 +80,7 @@ Global commands:   backlog [--workspace NAME] COMMAND
   add SLUG --title "..."        new item, prints its number
   list [--attention|--can-start|--status|--sort|--archive]  items with units
   search TEXT                   find items, details, archive
-  guide [SECTION]               manual: overview, lifecycle, a command, all
+  guide [SECTION] [--markdown]  manual: overview, lifecycle, a command, all
   bind NAME | unbind            bind a directory to a workspace
   serve [--port N]              read-only web viewer of all workspaces
 Item:   backlog N ACTION        (N = item number; no action = show)
