@@ -124,6 +124,14 @@ class BriefExportCommand(BriefMixin, ActionSpec, WorkspaceCommand):
     USAGE = "backlog N brief export > handoff.md"
     EXAMPLES = "Example: backlog 43 brief export > handoff.md"
     Parser = ReadParser
+    RULES_FILE = "export_rules.md"
+
+    def read_rules(self) -> str:
+        """The user's own rules for every executor, the same in every workspace."""
+        try:
+            return (self.session.home / self.RULES_FILE).read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return ""
 
     def run(self, args: ReadParser) -> int:
         workspace = self.open_workspace(args)
@@ -132,6 +140,9 @@ class BriefExportCommand(BriefMixin, ActionSpec, WorkspaceCommand):
         )
         details = DetailsFile.parse(workspace.read_details(item.id))
         exported = details.render(str(item.number), item.title, "(empty)")
+        rules = self.read_rules().strip()
+        if rules:
+            exported = f"{exported.rstrip()}\n\n---\n\n{rules}\n"
         CentralFileCheck.require_none(exported, self.session.home)
         self.print_lines(exported.rstrip("\n"))
         return 0

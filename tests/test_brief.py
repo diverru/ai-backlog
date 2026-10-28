@@ -110,6 +110,22 @@ def test_export_prints_the_executor_copy_and_writes_nothing(workspace: Backlog) 
     )
 
 
+def test_export_appends_the_rules_file_of_the_data_root(workspace: Backlog) -> None:
+    number = workspace.add_item("work")
+    plain = workspace.ok(str(number), "brief", "export")
+    rules = workspace.home / "export_rules.md"
+    rules.write_text("  \n")
+    assert workspace.ok(str(number), "brief", "export") == plain
+    rules.write_text("## Reporting\nReport each milestone.\n")
+    exported = workspace.ok(str(number), "brief", "export")
+    assert exported.startswith(plain.rstrip()) and exported.endswith(
+        "\n\n---\n\n## Reporting\nReport each milestone.\n"
+    )
+    assert "Reporting" not in workspace.ok(str(number), "brief", "show")
+    rules.write_text("Read BACKLOG.yaml first.")
+    workspace.refuse(f"{number} brief export", "central files")
+
+
 def test_central_file_names_are_refused_in_any_case_at_write_and_export(
     workspace: Backlog,
 ) -> None:

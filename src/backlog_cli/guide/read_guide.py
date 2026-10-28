@@ -131,7 +131,9 @@ backlog N brief append --section NAME (--text TEXT | --from-file FILE)
 backlog N brief export
   Print the executor copy to STDOUT (`# <number>: <title>` and every section; an
   empty one says `(empty)`). Redirect it yourself: `backlog 43 brief export >
-  ~/coordinator/handoffs/43.md`. The copy does not follow later edits.
+  ~/coordinator/handoffs/43.md`. The copy does not follow later edits. If the
+  data root holds `export_rules.md`, its text follows the brief after a `---`
+  line: the user's own rules for every executor, edited by hand.
 
 Examples:
   backlog 43 brief show --section "Agent handoff"
