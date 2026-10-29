@@ -96,6 +96,16 @@ renders the briefs).
 - The viewer only reads: GET and HEAD, no lock, no repair, no cache, every data
   string escaped; the archive file is opened only by the archive pages, the
   archive search and the card of an archived item.
+- The viewer UI is English. A page heading equals its menu label. Text for a
+  human shows no CLI command, no internal id (`b2`) and no caption that repeats
+  what the page shows: the viewer is for reading, commands and ids are for agents.
+- A clickable table row keeps its text selectable (drag selects, click follows);
+  a row link overlay stays inside its row.
+- The repository is public: examples are neutral (`acme/api`), no personal
+  names, employers, local paths or concrete org/repo defaults in code, guides or
+  tests. A concrete repository comes from config or is written in full.
+- `brief export` appends the data root's `export_rules.md`; personal rules live
+  there, never in the repo.
 - `search` is plain text by default and `--regex` is one expression under a 5 s
   SIGALRM limit (`SearchTimeLimit`); neither matches service fields.
 - Lists (tags, dependencies, `--no-post-release`) take commas, spaces or both
